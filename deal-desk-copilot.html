@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deal Desk Copilot — Concept Prototype</title>
+<style>
+/* ---------------------------------------------------------------------------
+   Design tokens — dark-first premium fintech workspace
+--------------------------------------------------------------------------- */
+:root, :root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:            #0d0f15;   /* indigo-charcoal canvas */
+  --surface:       #12141c;
+  --surface-2:     #171a24;
+  --surface-3:     #1e2230;
+  --ink:           #e6e8ee;   /* off-white, not pure white */
+  --ink-2:         #9aa1b2;
+  --ink-3:         #838aa0;   /* WCAG-checked ≥4.5:1 on surface & surface-2 */
+  --border:        rgba(214, 219, 235, 0.09);
+  --border-strong: rgba(214, 219, 235, 0.17);
+  --accent:        #6b7cf5;   /* refined indigo — text/marker use */
+  --accent-btn:    #4653d2;   /* primary action */
+  --accent-btn-hi: #525fe0;
+  --accent-ink:    #f2f3fb;
+  --accent-tint:   rgba(107, 124, 245, 0.09);
+  --good:          #52ab81;   /* WCAG-checked ≥4.5:1 as chip text on its own tint */
+  --good-tint:     rgba(74, 157, 118, 0.13);
+  --warn:          #c99a55;
+  --warn-tint:     rgba(201, 154, 85, 0.12);
+  --crit:          #db8079;   /* WCAG-checked ≥4.5:1 as chip text on its own tint */
+  --crit-tint:     rgba(196, 101, 92, 0.13);
+  --info:          #7a8cd8;
+  --info-tint:     rgba(122, 140, 216, 0.12);
+  --focus:         #6b7cf5;
+  --shadow:        0 1px 2px rgba(0,0,0,.25);
+  --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg:            #f4f5f8;
+  --surface:       #ffffff;
+  --surface-2:     #f4f5f8;
+  --surface-3:     #e9ebf1;
+  --ink:           #181a23;
+  --ink-2:         #565d6e;
+  --ink-3:         #666c80;   /* WCAG-checked ≥4.5:1 on surface & surface-2 */
+  --border:        rgba(24, 26, 35, 0.10);
+  --border-strong: rgba(24, 26, 35, 0.20);
+  --accent:        #4451d6;
+  --accent-btn:    #4451d6;
+  --accent-btn-hi: #3a46c2;
+  --accent-ink:    #ffffff;
+  --accent-tint:   rgba(68, 81, 214, 0.07);
+  --good:          #286b49;   /* WCAG-checked ≥4.5:1 as chip text on its own tint */
+  --good-tint:     rgba(46, 125, 85, 0.10);
+  --warn:          #835c25;   /* WCAG-checked ≥4.5:1 as chip text on its own tint */
+  --warn-tint:     rgba(150, 105, 42, 0.10);
+  --crit:          #a84a41;
+  --crit-tint:     rgba(168, 74, 65, 0.10);
+  --info:          #4b5ba6;
+  --info-tint:     rgba(75, 91, 166, 0.09);
+  --focus:         #4451d6;
+  --shadow:        0 1px 2px rgba(24,26,35,.06);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-radius: 3px; }
+h1,h2,h3,h4 { line-height: 1.3; font-weight: 600; letter-spacing: -.005em; }
+::selection { background: rgba(107,124,245,.30); }
+
+.num { font-variant-numeric: tabular-nums; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+}
+
+/* Micro-label: the workhorse metadata style */
+.mlabel {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---------------------------------------------------------------------------
+   Command bar
+--------------------------------------------------------------------------- */
+.cmdbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 14px;
+  height: 52px; padding: 0 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; flex: none; }
+.brand-mark {
+  width: 26px; height: 26px; border-radius: 6px; flex: none;
+  background: var(--accent-btn); color: var(--accent-ink);
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 11px; letter-spacing: .02em;
+}
+.brand-text { line-height: 1.15; white-space: nowrap; }
+.brand-text strong { font-size: 13.5px; font-weight: 650; display: block; }
+.brand-text span { font-size: 11px; color: var(--ink-3); }
+.cmd-divider { width: 1px; height: 22px; background: var(--border-strong); flex: none; }
+
+.cmd-field { display: flex; align-items: center; gap: 8px; flex: 0 1 300px; min-width: 150px; }
+.cmd-field label { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
+.cmd-select {
+  appearance: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--ink);
+  font: inherit; font-size: 12.5px; font-weight: 550;
+  padding: 5px 26px 5px 10px;
+  border-radius: 6px;
+  width: 100%;
+  min-width: 0;
+  max-width: 260px;
+  text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 55%, calc(100% - 10px) 55%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+.cmd-select:hover { border-color: var(--ink-3); }
+
+.cmdbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.cmd-status { display: flex; align-items: center; gap: 7px; }
+.cmd-status .mlabel { letter-spacing: .07em; }
+
+.env-tag {
+  font-size: 10px; font-weight: 650; letter-spacing: .08em;
+  padding: 3px 8px; border-radius: 4px;
+  background: var(--surface-2); color: var(--ink-3);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.theme-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  font-size: 12px; font-weight: 550; color: var(--ink-2);
+}
+.theme-toggle:hover { color: var(--ink); border-color: var(--ink-3); }
+.rep-chip { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.rep-avatar {
+  width: 24px; height: 24px; border-radius: 5px;
+  background: var(--surface-3); border: 1px solid var(--border);
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: 700; color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------------------
+   Disclaimer strip — visible, quiet
+--------------------------------------------------------------------------- */
+.disclaimer {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 7px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--ink-2);
+}
+.disclaimer::before {
+  content: ""; align-self: center; flex: none;
+  width: 6px; height: 6px; border-radius: 1px;
+  background: var(--warn);
+}
+.disclaimer strong { color: var(--ink); font-weight: 600; }
+
+/* ---------------------------------------------------------------------------
+   Application shell
+--------------------------------------------------------------------------- */
+.shell {
+  display: grid;
+  grid-template-columns: 192px minmax(0, 1fr) 344px;
+  min-height: calc(100vh - 88px);
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+/* Left workflow rail */
+.rail {
+  border-right: 1px solid var(--border);
+  padding: 18px 10px;
+  position: sticky; top: 88px;
+  height: calc(100vh - 88px);
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.rail .mlabel { padding: 0 10px 8px; }
+.rail-nav { list-style: none; display: flex; flex-direction: column; gap: 1px; }
+.rail-nav a {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 10px; border-radius: 6px;
+  font-size: 12.5px; font-weight: 550; color: var(--ink-2);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+}
+.rail-nav a .step-no {
+  font-family: var(--mono); font-size: 10.5px; color: var(--ink-3);
+  width: 14px; text-align: center; flex: none;
+}
+.rail-nav a:hover { background: var(--surface-2); color: var(--ink); }
+.rail-nav a.active { background: var(--accent-tint); color: var(--ink); border-left-color: var(--accent); }
+.rail-nav a.active .step-no { color: var(--accent); }
+.rail-foot { margin-top: auto; padding: 12px 10px 0; font-size: 11px; color: var(--ink-3); line-height: 1.5; border-top: 1px solid var(--border); }
+
+/* Center workspace */
+.main { min-width: 0; padding: 18px 22px 56px; }
+
+/* Right audit column */
+.audit-side {
+  border-left: 1px solid var(--border);
+  position: sticky; top: 88px;
+  height: calc(100vh - 88px);
+  overflow-y: auto;
+  padding: 18px 16px 28px;
+  background: var(--surface);
+}
+
+/* ---------------------------------------------------------------------------
+   Panels
+--------------------------------------------------------------------------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.panel + .panel, .panel + .scripts, .scripts + .panel { margin-top: 16px; }
+.panel-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-head h2 { font-size: 13.5px; font-weight: 650; }
+.panel-head .mlabel { margin-right: 2px; }
+.panel-body { padding: 16px; }
+
+/* ---------------------------------------------------------------------------
+   KPI strip — one panel, hairline-divided cells
+--------------------------------------------------------------------------- */
+.kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.kpi { padding: 13px 16px 12px; min-width: 0; border-right: 1px solid var(--border); }
+.kpi:last-child { border-right: none; }
+.kpi-label { display: block; margin-bottom: 5px; }
+.kpi-value {
+  font-size: 21px; font-weight: 650; letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink); line-height: 1.2;
+}
+.kpi-value .unit { font-size: 12.5px; font-weight: 550; color: var(--ink-2); }
+.kpi-sub { font-size: 11.5px; color: var(--ink-3); display: block; margin-top: 3px; }
+.kpi-meter { height: 3px; border-radius: 2px; background: var(--surface-3); margin-top: 9px; overflow: hidden; }
+.kpi-meter > i { display: block; height: 100%; background: var(--accent); transition: width .45s ease; }
+.kpi .chip { margin-top: 2px; }
+
+/* ---------------------------------------------------------------------------
+   Chips (status/badges) — compact rects, icon+label discipline
+--------------------------------------------------------------------------- */
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  padding: 2px 7px; border-radius: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.chip::before { content: ""; width: 5px; height: 5px; border-radius: 1px; flex: none; }
+.chip-good  { background: var(--good-tint); color: var(--good); }   .chip-good::before  { background: var(--good); }
+.chip-warn  { background: var(--warn-tint); color: var(--warn); }   .chip-warn::before  { background: var(--warn); }
+.chip-crit  { background: var(--crit-tint); color: var(--crit); }   .chip-crit::before  { background: var(--crit); }
+.chip-info  { background: var(--info-tint); color: var(--info); }   .chip-info::before  { background: var(--info); }
+.chip-muted { background: var(--surface-2); color: var(--ink-2); border-color: var(--border); } .chip-muted::before { background: var(--ink-3); }
+.chip-plain::before { display: none; }
+
+/* ---------------------------------------------------------------------------
+   Intake form — enterprise density
+--------------------------------------------------------------------------- */
+.intake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+.field { min-width: 0; }
+.field.span2 { grid-column: 1 / -1; }
+.field > label, .field > .field-label, fieldset legend {
+  display: block; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 6px; padding: 0;
+}
+.field .hint { font-weight: 500; letter-spacing: .03em; color: var(--ink-3); text-transform: none; }
+select:not(.cmd-select), input[type="text"], textarea {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+select:focus, input:focus, textarea:focus {
+  outline: 2px solid var(--focus); outline-offset: 0; border-color: transparent;
+}
+textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+.amount-wrap { position: relative; }
+.amount-wrap .cur {
+  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  color: var(--ink-3); font-size: 13px; pointer-events: none;
+}
+.amount-wrap input { padding-left: 24px; font-variant-numeric: tabular-nums; }
+
+fieldset { border: none; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label {
+  position: relative;
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 12px; font-weight: 550;
+  color: var(--ink-2);
+  cursor: pointer;
+  background: var(--surface-2);
+  transition: border-color .1s, color .1s, background .1s;
+}
+.seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.seg label:has(input:checked) {
+  background: var(--accent-tint); border-color: var(--accent);
+  color: var(--ink); font-weight: 600;
+}
+.seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 1px; }
+.seg label:hover:not(:has(input:checked)) { border-color: var(--ink-3); color: var(--ink); }
+
+.switch-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface-2);
+  height: 100%;
+}
+.switch-row .sw-text strong { font-size: 12.5px; font-weight: 600; display: block; }
+.switch-row .sw-text span { font-size: 11.5px; color: var(--ink-3); }
+.switch {
+  position: relative; width: 34px; height: 19px; flex: none; margin-top: 2px;
+  border-radius: 99px; background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  transition: background .12s;
+  cursor: pointer; display: inline-block;
+}
+.switch input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.switch .knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--ink-2);
+  transition: transform .12s, background .12s;
+}
+.switch:has(input:checked) { background: var(--accent-btn); border-color: var(--accent-btn); }
+.switch:has(input:checked) .knob { transform: translateX(15px); background: var(--accent-ink); }
+.switch:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 8px 14px; border-radius: 6px;
+  font-weight: 600; font-size: 13px;
+  border: 1px solid transparent;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.btn-primary { background: var(--accent-btn); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-btn-hi); }
+.btn-primary[disabled] { opacity: .55; cursor: progress; }
+.btn-ghost {
+  border-color: var(--border-strong); color: var(--ink-2);
+  font-size: 11.5px; padding: 4px 10px; border-radius: 5px; font-weight: 600;
+  background: transparent;
+}
+.btn-ghost:hover { color: var(--ink); border-color: var(--ink-3); }
+.btn-ghost.copied { color: var(--good); border-color: var(--good); }
+.intake-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.intake-actions .note { font-size: 11.5px; color: var(--ink-3); }
+
+/* ---------------------------------------------------------------------------
+   Recommendation workspace
+--------------------------------------------------------------------------- */
+.empty-state { padding: 44px 24px; text-align: center; color: var(--ink-3); }
+.empty-state p { max-width: 380px; margin: 0 auto; font-size: 13px; }
+
+.status-ctl { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 6px; overflow: hidden; margin-left: auto; }
+.status-ctl button {
+  padding: 4px 11px; font-size: 11.5px; font-weight: 600; color: var(--ink-2);
+  border-right: 1px solid var(--border);
+  background: transparent;
+}
+.status-ctl button:last-child { border-right: none; }
+.status-ctl button[aria-pressed="true"] { background: var(--accent-btn); color: var(--accent-ink); }
+.status-ctl button:hover:not([aria-pressed="true"]) { background: var(--surface-2); color: var(--ink); }
+
+/* Headline: working-document header with a left accent rule */
+.rec-headline {
+  padding: 14px 16px 14px 18px;
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 6px;
+  background: var(--surface-2);
+  margin-bottom: 16px;
+}
+.rec-headline .rh-tag { font-size: 10.5px; font-weight: 650; color: var(--accent); text-transform: uppercase; letter-spacing: .09em; }
+.rec-headline h3 { font-size: 15px; margin: 4px 0 6px; }
+.rec-headline p { font-size: 13px; color: var(--ink-2); max-width: 88ch; }
+.rec-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 11px; }
+
+.rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rec-block {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 13px 15px; background: var(--surface);
+  min-width: 0;
+}
+.rec-block.span2 { grid-column: 1 / -1; }
+.rec-block h3 {
+  font-size: 10.5px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 9px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.rec-block h3 .chip { margin-left: auto; }
+.rec-block p { font-size: 13px; color: var(--ink); }
+.rec-block ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.rec-block li { font-size: 13px; padding-left: 16px; position: relative; }
+.rec-block li::before {
+  content: ""; position: absolute; left: 2px; top: 8px;
+  width: 5px; height: 5px; border-radius: 1px; background: var(--ink-3);
+}
+.rec-block li strong { font-weight: 600; }
+.rec-block li .li-sub { color: var(--ink-2); }
+.rec-block.tone-warn { border-left: 2px solid var(--warn); }
+.rec-block.tone-warn h3 { color: var(--warn); }
+.rec-block.tone-warn li::before { background: var(--warn); }
+.rec-block.tone-info { border-left: 2px solid var(--info); }
+.rec-block.tone-info h3 { color: var(--info); }
+.rec-block.tone-info li::before { background: var(--info); }
+
+.draft-box {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 11px 13px;
+  font-size: 12.5px; line-height: 1.55; color: var(--ink);
+  white-space: pre-wrap;
+}
+.draft-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+/* ---------------------------------------------------------------------------
+   Comparison table — dense, hairline, scannable
+--------------------------------------------------------------------------- */
+.table-scroll { overflow-x: auto; }
+table.compare { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 700px; }
+.compare th, .compare td {
+  text-align: left; padding: 10px 13px; vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+.compare thead th {
+  font-size: 10.5px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 2px; padding-bottom: 8px;
+  white-space: nowrap;
+}
+.compare tbody tr:last-child td { border-bottom: none; }
+.compare td.approach { font-weight: 600; white-space: nowrap; }
+.compare td.approach .sub { display: block; font-weight: 450; font-size: 11.5px; color: var(--ink-3); white-space: normal; }
+.compare tr.recommended-row td { background: var(--accent-tint); }
+.compare tr.recommended-row td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
+.fit-strong { color: var(--good); font-weight: 650; }
+.fit-mod { color: var(--warn); font-weight: 650; }
+.fit-low { color: var(--ink-3); font-weight: 600; }
+
+/* ---------------------------------------------------------------------------
+   Script cards — editable internal artifacts
+--------------------------------------------------------------------------- */
+.scripts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.script-card { display: flex; flex-direction: column; }
+.script-card .panel-body { flex: 1; display: flex; flex-direction: column; gap: 9px; }
+.editable {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 12px 14px; font-size: 13px; line-height: 1.6;
+  background: var(--surface-2);
+  flex: 1;
+  min-height: 140px;
+  transition: border-color .1s;
+}
+.editable:hover { border-color: var(--border-strong); }
+.editable:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: transparent; }
+.editable p + p { margin-top: 9px; }
+.edit-hint { font-size: 11px; color: var(--ink-3); }
+.edited-flag { display: none; }
+.edited-flag.show { display: inline-flex; }
+
+/* ---------------------------------------------------------------------------
+   Audit column
+--------------------------------------------------------------------------- */
+.audit-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.audit-head h2 { font-size: 13.5px; font-weight: 650; }
+.audit-head .btn-ghost { margin-left: auto; }
+.audit-summary { display: flex; flex-direction: column; gap: 1px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.audit-stat {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 9px 12px; background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.audit-stat:last-child { border-bottom: none; }
+.audit-stat .as-value { font-size: 12.5px; font-weight: 600; }
+.audit-list { list-style: none; display: flex; flex-direction: column; }
+.audit-item {
+  display: grid; grid-template-columns: 60px 12px 1fr; gap: 8px;
+  padding: 8px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.audit-item:last-child { border-bottom: none; }
+.audit-time { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); padding-top: 2px; white-space: nowrap; }
+.audit-dot-col { display: flex; flex-direction: column; align-items: center; padding-top: 6px; }
+.audit-dot { width: 6px; height: 6px; border-radius: 1px; flex: none; }
+.audit-dot.t-input  { background: var(--info); }
+.audit-dot.t-ai     { background: var(--accent); }
+.audit-dot.t-edit   { background: var(--warn); }
+.audit-dot.t-status { background: var(--good); }
+.audit-dot.t-flag   { background: var(--crit); }
+.audit-body strong { font-weight: 600; }
+.audit-body .a-detail { color: var(--ink-2); display: block; }
+
+/* ---------------------------------------------------------------------------
+   Procedural loading state
+--------------------------------------------------------------------------- */
+.proc { padding: 6px 2px 2px; }
+.proc-title { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 12px; display: flex; align-items: center; gap: 9px; }
+.proc-list { list-style: none; display: flex; flex-direction: column; gap: 7px; max-width: 420px; }
+.proc-list li {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 12.5px; color: var(--ink-3);
+  font-family: var(--mono); font-size: 11.5px;
+  transition: color .15s;
+}
+.proc-list li .p-mark {
+  width: 13px; height: 13px; border-radius: 3px; flex: none;
+  border: 1px solid var(--border-strong);
+  display: grid; place-items: center;
+  font-size: 9px; color: var(--good);
+}
+.proc-list li.done { color: var(--ink-2); }
+.proc-list li.done .p-mark { border-color: var(--good); }
+.proc-list li.done .p-mark::before { content: "✓"; }
+.proc-bar { height: 2px; background: var(--surface-3); border-radius: 1px; margin-top: 16px; overflow: hidden; max-width: 420px; }
+.proc-bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s linear; }
+.spinner {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid var(--border-strong); border-top-color: var(--accent);
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 1.6s; }
+  html { scroll-behavior: auto; }
+}
+
+/* footer note */
+.foot {
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px; color: var(--ink-3); line-height: 1.6;
+  max-width: 100ch;
+}
+.foot strong { color: var(--ink-2); }
+
+/* ---------------------------------------------------------------------------
+   Responsive
+--------------------------------------------------------------------------- */
+@media (max-width: 1280px) {
+  .shell { grid-template-columns: minmax(0, 1fr) 320px; }
+  .rail { display: none; }
+}
+@media (max-width: 1160px) {
+  .env-tag { display: none; }
+  .rep-chip .rep-name { display: none; }
+}
+@media (max-width: 1060px) {
+  .shell { grid-template-columns: 1fr; }
+  .audit-side { position: static; height: auto; border-left: none; border-top: 1px solid var(--border); }
+  .rec-grid { grid-template-columns: 1fr; }
+  .scripts { grid-template-columns: 1fr; }
+  .cmd-field label { display: none; }
+}
+@media (max-width: 720px) {
+  .cmdbar { height: auto; padding: 8px 12px; flex-wrap: wrap; row-gap: 8px; }
+  .cmd-divider, .env-tag, .rep-chip { display: none; }
+  .cmdbar-right { margin-left: 0; }
+  .main { padding: 14px 12px 40px; }
+  .audit-side { padding: 14px 12px; }
+  .disclaimer { padding: 7px 12px; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .kpi:nth-child(2) { border-right: none; }
+  .kpi:nth-child(1), .kpi:nth-child(2) { border-bottom: 1px solid var(--border); }
+  .kpi-value { font-size: 18px; }
+  .intake-grid { grid-template-columns: 1fr; }
+  .status-ctl { margin-left: 0; }
+  /* stacked comparison table */
+  table.compare { min-width: 0; }
+  .compare thead { display: none; }
+  .compare tbody tr { display: block; border-bottom: 1px solid var(--border-strong); padding: 8px 0; }
+  .compare tbody tr:last-child { border-bottom: none; }
+  .compare tbody td { display: block; border-bottom: none; padding: 5px 12px; }
+  .compare tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: 1px;
+  }
+  .compare tr.recommended-row td:first-child { box-shadow: none; }
+  .compare tr.recommended-row td { background: var(--accent-tint); }
+  .compare td.approach { white-space: normal; }
+}
+</style>
+</head>
+<body>
+
+<!-- ======================= COMMAND BAR ======================= -->
+<header class="cmdbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">DD</div>
+    <div class="brand-text">
+      <strong>Deal Desk Copilot</strong>
+      <span>Concept Prototype · Merchant Enablement</span>
+    </div>
+  </div>
+  <span class="cmd-divider" aria-hidden="true"></span>
+  <div class="cmd-field">
+    <label for="scenarioSel">Scenario</label>
+    <select id="scenarioSel" class="cmd-select">
+      <option value="hvac">HVAC emergency replacement</option>
+      <option value="roofing">Roofing insurance gap</option>
+      <option value="kitchen">Kitchen remodel upsell</option>
+      <option value="custom">Custom intake</option>
+    </select>
+  </div>
+  <div class="cmdbar-right">
+    <div class="cmd-status">
+      <span class="mlabel">State</span>
+      <span id="cmdStatus"><span class="chip chip-muted">Draft</span></span>
+    </div>
+    <span class="cmd-divider" aria-hidden="true"></span>
+    <span class="env-tag">PROTOTYPE · MOCK DATA</span>
+    <button class="theme-toggle" id="themeToggle" aria-pressed="true">
+      <svg id="themeIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+      <span id="themeLabel">Light</span>
+    </button>
+    <div class="rep-chip">
+      <span class="rep-avatar" aria-hidden="true">DM</span>
+      <span class="rep-name">D. Marsh · Comfort First</span>
+    </div>
+  </div>
+</header>
+
+<!-- ======================= DISCLAIMER ======================= -->
+<div class="disclaimer" role="note">
+  <span><strong>Decision support only.</strong> Suggests conversation approaches and talking points — it does not make, predict, or imply lending decisions, approvals, or terms. All customer-facing content requires merchant review.</span>
+</div>
+
+<div class="shell">
+
+  <!-- ======================= WORKFLOW RAIL ======================= -->
+  <nav class="rail" aria-label="Workflow">
+    <span class="mlabel">Workflow</span>
+    <ul class="rail-nav">
+      <li><a href="#sec-intake" class="active"><span class="step-no">1</span>Intake</a></li>
+      <li><a href="#sec-rec"><span class="step-no">2</span>Recommendation</a></li>
+      <li><a href="#sec-compare"><span class="step-no">3</span>Comparison</a></li>
+      <li><a href="#sec-scripts"><span class="step-no">4</span>Scripts</a></li>
+      <li><a href="#sec-audit"><span class="step-no">5</span>Audit</a></li>
+    </ul>
+    <div class="rail-foot">
+      Internal decision-support prototype. No credit systems connected. Mock data only.
+    </div>
+  </nav>
+
+  <!-- ======================= CENTER WORKSPACE ======================= -->
+  <main class="main">
+
+    <!-- KPI strip -->
+    <section class="kpis" aria-label="Session metrics">
+      <div class="kpi">
+        <span class="kpi-label mlabel">Est. time saved</span>
+        <span class="kpi-value" id="kpiTime">—</span>
+        <span class="kpi-sub" id="kpiTimeSub">vs. manual prep for this conversation</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label mlabel">Potential ticket uplift</span>
+        <span class="kpi-value" id="kpiUplift">—</span>
+        <span class="kpi-sub" id="kpiUpliftSub">if suggested scope adds land</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label mlabel">Merchant confidence</span>
+        <span class="kpi-value" id="kpiConf">—</span>
+        <span class="kpi-sub">fit between inputs and playbook</span>
+        <div class="kpi-meter" aria-hidden="true"><i id="kpiConfBar" style="width:0%"></i></div>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label mlabel">Human review</span>
+        <span class="kpi-value" style="font-size:13px; line-height:1.4;"><span class="chip chip-muted" id="kpiReviewPill">—</span></span>
+        <span class="kpi-sub" id="kpiReviewSub"></span>
+      </div>
+    </section>
+
+    <!-- Intake -->
+    <section class="panel" id="sec-intake" aria-label="Merchant intake">
+      <div class="panel-head">
+        <span class="mlabel">01 · Capture</span>
+        <h2>Merchant intake</h2>
+        <span class="chip chip-muted chip-plain" style="margin-left:auto" id="intakeMode">Scenario: HVAC emergency replacement</span>
+      </div>
+      <div class="panel-body">
+        <form id="intakeForm" novalidate>
+          <div class="intake-grid">
+            <div class="field">
+              <label for="fCategory">Project category</label>
+              <select id="fCategory" name="category">
+                <option value="hvac">HVAC</option>
+                <option value="roofing">Roofing</option>
+                <option value="kitchen">Kitchen Remodel</option>
+                <option value="bath">Bath Remodel</option>
+                <option value="pools">Pools &amp; Spas</option>
+                <option value="windows">Windows &amp; Doors</option>
+                <option value="solar">Solar</option>
+                <option value="water">Water Systems</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fAmount">Estimated project amount <span class="hint">USD</span></label>
+              <div class="amount-wrap">
+                <span class="cur" aria-hidden="true">$</span>
+                <input type="text" id="fAmount" name="amount" inputmode="numeric" autocomplete="off" value="12,800">
+              </div>
+            </div>
+
+            <div class="field">
+              <fieldset>
+                <legend>Customer priority</legend>
+                <div class="seg" id="segPriority">
+                  <label><input type="radio" name="priority" value="payment">Lowest monthly payment</label>
+                  <label><input type="radio" name="priority" value="promo">Promotional financing</label>
+                  <label><input type="radio" name="priority" value="speed" checked>Fast approval conversation</label>
+                  <label><input type="radio" name="priority" value="scope">Bigger project scope</label>
+                </div>
+              </fieldset>
+            </div>
+            <div class="field">
+              <fieldset>
+                <legend>Urgency level</legend>
+                <div class="seg" id="segUrgency">
+                  <label><input type="radio" name="urgency" value="today" checked>Same-day close</label>
+                  <label><input type="radio" name="urgency" value="week">This week</label>
+                  <label><input type="radio" name="urgency" value="research">Researching options</label>
+                </div>
+              </fieldset>
+            </div>
+
+            <div class="field span2">
+              <label for="fNotes">Notes from conversation</label>
+              <textarea id="fNotes" name="notes" rows="3"></textarea>
+            </div>
+
+            <div class="field">
+              <div class="switch-row">
+                <span class="sw-text">
+                  <strong>Additional approved credit available</strong>
+                  <span>Surfaces scope-expansion talking points when the customer has stated headroom</span>
+                </span>
+                <span class="switch">
+                  <input type="checkbox" id="fUpsell" name="upsell" aria-label="Additional approved credit available">
+                  <span class="knob" aria-hidden="true"></span>
+                </span>
+              </div>
+            </div>
+            <div class="field intake-actions">
+              <span class="note">Outputs are suggestions — review before customer use</span>
+              <button type="submit" class="btn btn-primary" id="generateBtn">Generate recommendation</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Recommendation -->
+    <section class="panel" id="sec-rec" aria-label="AI recommendation">
+      <div class="panel-head">
+        <span class="mlabel">02 · Review</span>
+        <h2>Recommendation workspace</h2>
+        <span class="chip chip-muted chip-plain num" id="genStamp" hidden></span>
+        <div class="status-ctl" role="group" aria-label="Recommendation status" id="statusCtl">
+          <button type="button" data-status="draft" aria-pressed="true">Draft</button>
+          <button type="button" data-status="reviewed" aria-pressed="false">Reviewed</button>
+          <button type="button" data-status="approved" aria-pressed="false">Approved for merchant use</button>
+        </div>
+      </div>
+      <div class="panel-body" id="recBody" aria-live="polite">
+        <div class="empty-state">
+          <p>Capture the conversation above and generate a recommendation to populate this workspace.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison table -->
+    <section class="panel" id="sec-compare" aria-label="Financing conversation comparison">
+      <div class="panel-head">
+        <span class="mlabel">03 · Compare</span>
+        <h2>Financing conversation comparison</h2>
+        <span class="chip chip-muted chip-plain" style="margin-left:auto">Conversation approaches — not loan products</span>
+      </div>
+      <div class="panel-body">
+        <div class="table-scroll">
+          <table class="compare">
+            <thead>
+              <tr>
+                <th scope="col">Approach</th>
+                <th scope="col">Best for</th>
+                <th scope="col">Tradeoff</th>
+                <th scope="col">Suggested merchant framing</th>
+                <th scope="col">Customer fit</th>
+                <th scope="col">Review flag</th>
+              </tr>
+            </thead>
+            <tbody id="compareBody">
+              <tr><td colspan="6" style="color:var(--ink-3); text-align:center; padding:26px;">Generate a recommendation to compare approaches for this customer.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Script cards -->
+    <div class="scripts" id="sec-scripts">
+      <section class="panel script-card" aria-label="Merchant-ready script">
+        <div class="panel-head">
+          <span class="mlabel">04 · Say this</span>
+          <h2>Merchant-ready script</h2>
+          <span class="chip chip-warn edited-flag" id="editedMerchant">Edited</span>
+        </div>
+        <div class="panel-body">
+          <div class="editable" id="merchantScript" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Merchant-ready script, editable" data-edit-name="Merchant script"><p style="color:var(--ink-3)">Waiting for a generated recommendation…</p></div>
+          <span class="edit-hint">Click to edit — changes are logged to the audit trail</span>
+        </div>
+      </section>
+      <section class="panel script-card" aria-label="Customer-ready explanation">
+        <div class="panel-head">
+          <span class="mlabel">04 · Customer hears</span>
+          <h2>Customer-ready explanation</h2>
+          <span class="chip chip-warn edited-flag" id="editedCustomer">Edited</span>
+        </div>
+        <div class="panel-body">
+          <div class="editable" id="customerScript" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Customer-ready explanation, editable" data-edit-name="Customer explanation"><p style="color:var(--ink-3)">Waiting for a generated recommendation…</p></div>
+          <span class="edit-hint">Click to edit — changes are logged to the audit trail</span>
+        </div>
+      </section>
+    </div>
+
+    <footer class="foot">
+      <strong>Prototype notice.</strong> Deal Desk Copilot is an independent concept prototype exploring decision-support tooling for point-of-sale merchant financing conversations — built as a product and UX case study, not affiliated with, built for, or endorsed by any lender, card network, or financial institution. It uses mock data and deterministic sample outputs throughout, does not access credit systems, does not make or communicate lending decisions, and does not provide legal, regulatory, or financial advice. Illustrative monthly figures are examples for conversation framing only — not quotes, offers, or terms. In a production setting, all customer-facing language would require merchant review, and promotional financing claims would need compliance-approved language.
+    </footer>
+  </main>
+
+  <!-- ======================= AUDIT COLUMN ======================= -->
+  <aside class="audit-side" id="sec-audit" aria-label="Audit trail">
+    <div class="audit-head">
+      <span class="mlabel">05</span>
+      <h2>Audit trail</h2>
+      <button type="button" class="btn btn-ghost" id="exportAudit">Copy JSON</button>
+    </div>
+    <div class="audit-summary">
+      <div class="audit-stat">
+        <span class="mlabel">Approval state</span>
+        <span class="as-value" id="auditApproval"><span class="chip chip-muted">Draft</span></span>
+      </div>
+      <div class="audit-stat">
+        <span class="mlabel">Human edits</span>
+        <span class="as-value num" id="auditEdits">0</span>
+      </div>
+      <div class="audit-stat">
+        <span class="mlabel">Escalation required</span>
+        <span class="as-value" id="auditEscalation"><span class="chip chip-muted">—</span></span>
+      </div>
+    </div>
+    <ol class="audit-list" id="auditList" aria-live="polite"></ol>
+  </aside>
+
+</div><!-- /shell -->
+
+<div class="visually-hidden" role="status" id="srStatus"></div>
+
+<script>
+"use strict";
+/* ===========================================================================
+   Utilities
+=========================================================================== */
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const fmtUSD = n => "$" + Math.round(n).toLocaleString("en-US");
+const nowStamp = () => new Date().toLocaleTimeString("en-US", {hour12:false});
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const parseAmount = () => {
+  const raw = ($("#fAmount").value || "").replace(/[^0-9.]/g, "");
+  const n = parseFloat(raw);
+  return isFinite(n) && n > 0 ? Math.round(n) : 15000;
+};
+/* Illustrative monthly range — framing only, clearly labeled in all copy */
+const monthlyRange = amt => `${fmtUSD(amt * 0.011)}–${fmtUSD(amt * 0.019)}/mo`;
+
+const PRIORITY_LABELS = { payment:"Lowest monthly payment", promo:"Promotional financing", speed:"Fast approval conversation", scope:"Bigger project scope" };
+const URGENCY_LABELS = { today:"Same-day close", week:"This week", research:"Researching options" };
+const CATEGORY_LABELS = { hvac:"HVAC", roofing:"Roofing", kitchen:"Kitchen Remodel", bath:"Bath Remodel", pools:"Pools & Spas", windows:"Windows & Doors", solar:"Solar", water:"Water Systems" };
+const SCENARIO_NAMES = { hvac:"HVAC emergency replacement", roofing:"Roofing insurance gap", kitchen:"Kitchen remodel upsell" };
+
+/* ===========================================================================
+   Theme — dark canvas by default
+=========================================================================== */
+(function initTheme(){
+  const saved = localStorage.getItem("ddc-theme");
+  setTheme(saved || "dark", false);
+  $("#themeToggle").addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    setTheme(next, true);
+  });
+})();
+function setTheme(mode, persist){
+  document.documentElement.dataset.theme = mode;
+  const dark = mode === "dark";
+  $("#themeLabel").textContent = dark ? "Light" : "Dark";
+  $("#themeToggle").setAttribute("aria-pressed", String(dark));
+  $("#themeIcon").innerHTML = dark
+    ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'
+    : '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>';
+  if (persist) localStorage.setItem("ddc-theme", mode);
+}
+
+/* ===========================================================================
+   Category knowledge — upsell libraries (deterministic mock data)
+=========================================================================== */
+const CATEGORY_UPSELLS = {
+  hvac: [
+    { title: "Indoor air quality package", desc: "Media filtration + UV treatment installed with the air handler — one visit, no second mobilization fee.", delta: 900 },
+    { title: "Smart thermostat + zoning check", desc: "Positions the new system as a comfort upgrade, not just a replacement.", delta: 350 },
+    { title: "10-year labor coverage", desc: "Pairs naturally with monthly framing: small add today, no surprise service invoices later.", delta: 650 }
+  ],
+  roofing: [
+    { title: "Gutter and guard replacement", desc: "Crew and staging are already on site — the marginal install cost is the lowest it will ever be.", delta: 1800 },
+    { title: "Ridge vent / ventilation correction", desc: "Protects the new shingle warranty; frame it as insurance on the insurance job.", delta: 750 },
+    { title: "Upgraded shingle class", desc: "Impact-rated shingles can matter at the next storm claim; position as long-term resilience.", delta: 1400 }
+  ],
+  kitchen: [
+    { title: "Island addition", desc: "The single feature the customer keeps returning to — quote it as its own line so it is a choice, not a renegotiation.", delta: 6800 },
+    { title: "Lighting package", desc: "Under-cabinet + pendants; small monthly delta, large perceived finish quality.", delta: 2400 },
+    { title: "Appliance tier upgrade", desc: "Install labor is identical; only the equipment cost moves.", delta: 3900 }
+  ],
+  bath: [
+    { title: "Comfort-height fixtures + grab-bar blocking", desc: "Aging-in-place prep while walls are open — nearly free later becomes impossible.", delta: 1200 },
+    { title: "Heated floor", desc: "High-delight, low-cost while the floor is already up.", delta: 1600 },
+    { title: "Glass upgrade", desc: "Frameless glass reads as the finish level of the whole room.", delta: 1100 }
+  ],
+  pools: [
+    { title: "Automation + LED package", desc: "Controls installed at build time avoid a full retrofit later.", delta: 3200 },
+    { title: "Heater / heat pump", desc: "Extends the swim season — frame as cost per extra month of use.", delta: 4500 },
+    { title: "Safety cover", desc: "Practical add most owners buy within a year anyway.", delta: 1900 }
+  ],
+  windows: [
+    { title: "Whole-home vs. phased install", desc: "Completing all openings in one mobilization lowers per-window cost.", delta: 4200 },
+    { title: "Patio door upgrade", desc: "Highest-traffic opening; biggest daily-use payoff.", delta: 2600 },
+    { title: "Exterior trim wrap", desc: "Finishes the look and removes future paint maintenance.", delta: 1500 }
+  ],
+  solar: [
+    { title: "Battery storage", desc: "Backup power is the reason most customers say yes; quote it separately.", delta: 9000 },
+    { title: "EV charger rough-in", desc: "Trenching and panel work are already happening.", delta: 1200 },
+    { title: "Panel/service upgrade", desc: "Often required anyway; bundling avoids a second permit cycle.", delta: 2800 }
+  ],
+  water: [
+    { title: "Whole-home filtration", desc: "Pairs with softener install — one plumbing visit.", delta: 1400 },
+    { title: "Tankless water heater", desc: "Same mechanical area, complementary trade work.", delta: 3300 },
+    { title: "Annual service plan", desc: "Small recurring add that keeps the relationship active.", delta: 300 }
+  ]
+};
+
+/* ===========================================================================
+   Comparison-approach library
+=========================================================================== */
+const APPROACHES = {
+  payment: {
+    name: "Lowest payment emphasis",
+    sub: "Anchor on affordability",
+    bestFor: "Budget-sensitive customers and unplanned expenses",
+    tradeoff: "Can anchor the customer low and shrink openness to scope adds",
+    framing: "“Let’s find the monthly number that fits your budget, then make sure the project is done right.”"
+  },
+  promo: {
+    name: "Promotional financing emphasis",
+    sub: "Lead with promo-period optionality",
+    bestFor: "Customers with cash who want flexibility or dislike interest",
+    tradeoff: "Promo mechanics require precise, compliance-approved language",
+    framing: "“If you qualify, there may be promotional options — let’s look at what’s available before you decide how to pay.”"
+  },
+  speed: {
+    name: "Fast-decision emphasis",
+    sub: "Reduce friction, one clear next step",
+    bestFor: "Urgent replacements where the customer wants certainty today",
+    tradeoff: "Less room to explore scope; keep options to two, not five",
+    framing: "“The application conversation takes about ten minutes, and you’ll know where you stand before I leave.”"
+  },
+  scope: {
+    name: "Bigger scope emphasis",
+    sub: "Monthly-delta framing for adds",
+    bestFor: "Engaged customers already imagining the finished project",
+    tradeoff: "Higher totals mean more review checkpoints and slower closes",
+    framing: "“Instead of what does it cost, let’s ask what does each option change per month — then you choose the version of the project you actually want.”"
+  }
+};
+
+/* ===========================================================================
+   Quick-load scenarios — curated, realistic mock content
+=========================================================================== */
+const SCENARIOS = {
+  hvac: {
+    form: {
+      category: "hvac", amount: 12800, priority: "speed", urgency: "today", upsell: false,
+      notes: "AC compressor failed yesterday; house at 84°F with two kids at home. Homeowner is comparing us against one other bid and wants this resolved before the weekend. Spouse present. Existing system is 16 years old, R-22."
+    },
+    curated: {
+      headlineTag: "Fast-decision framing",
+      headline: "Lead with certainty, keep the numbers simple",
+      summary: "This homeowner is not shopping for a rate — they are buying a working house by Friday. Position financing as the reason they can choose the right system today instead of the cheapest system today. Keep the money conversation to three items: one installed total, one illustrative monthly range, one ten-minute application conversation. Do not introduce promotional mechanics unless the customer raises them; optionality reads as delay to a customer in this state.",
+      why: [
+        ["Urgency is same-day with a failed system", "Speed and certainty are the differentiators against the competing bid — not price."],
+        ["Priority is a fast approval conversation", "The customer wants to know where they stand before you leave, not a menu of structures."],
+        ["16-year-old R-22 system", "Repair-vs-replace math strongly favors replacement; financing removes the reason to limp the old unit along."],
+        ["Competing bid in play", "A same-visit financing conversation is something the other bid may not offer — make it effortless, not pushy."]
+      ],
+      upsells: [
+        { title: "Indoor air quality package", desc: "UV + media filtration installed with the new air handler in the same visit. With two kids at home, this is a relevance add, not a pitch.", delta: 900 },
+        { title: "10-year labor coverage", desc: "Speaks directly to a family that just experienced a failure — no surprise invoices on the new system.", delta: 650 }
+      ],
+      objection: "“I want to think about it — I have another bid coming.”\n\nThat’s fair, and you should compare. Two things worth comparing beyond price: first, we can have your house cool by Friday — ask them for their install date in writing. Second, the financing conversation takes about ten minutes right now, there’s no obligation, and knowing your options is useful no matter who you choose. Would it help to have that answered before you compare bids?",
+      sms: "Hi Sarah — thanks for walking through the options today. Summary: replace the failed 16-yr system with the high-efficiency unit we discussed, installed Friday, $12,800 all-in. Financing conversation takes ~10 min whenever you're ready — no obligation. I'm holding the Friday slot until tomorrow at noon. — Dan, Comfort First",
+      email_subject: "Your replacement options + Friday install hold — Comfort First Heating & Air",
+      email: "Hi Sarah,\n\nThanks for your time today — I know a house at 84° with kids at home isn't where anyone wants to be, so here's everything in one place.\n\nRECOMMENDED: High-efficiency replacement system — $12,800 installed\n• Removes the failed 16-year R-22 unit (that refrigerant is phased out, which is why repairs run high)\n• Install crew available this Friday — I'm holding the slot until tomorrow, 12:00 PM\n• 10-year parts warranty included\n\nON PAYING FOR IT\nIf it's useful, financing may be an option — the conversation takes about ten minutes and you'll know where you stand right away. Many customers think about it as a monthly cost rather than a lump sum; I'm happy to walk through what that could look like. No obligation either way.\n\nQuestions before Friday? Reply here or call/text me directly.\n\nDan Marsh\nComfort First Heating & Air",
+      merchantScript: [
+        "“Here’s where you stand: the compressor failure on a 16-year R-22 system means repair money is going into equipment that’s already past its life. The replacement is $12,800 installed, and my crew can have you cool by Friday.”",
+        "“On paying for it — you don’t have to decide between draining savings and waiting. If financing is useful, the conversation takes about ten minutes right here, and you’ll know where you stand before I leave. For a project this size, customers often think about it as a monthly cost — illustratively somewhere in the $141–$243 a month range depending on the option, though the actual terms come from the application, not from me.”",
+        "“So the only decision for right now is: do you want the Friday install? Everything else we can settle in the next ten minutes.”"
+      ],
+      customerScript: [
+        "Your current system is 16 years old and uses a refrigerant that’s being phased out, which is why fixing it costs so much. Replacing it is $12,800, fully installed, and we can have your house cool by Friday.",
+        "You don’t need to pay all of that today. If it helps, there’s a short financing conversation — about ten minutes — that shows you what a monthly payment could look like. There’s no obligation, and the actual terms would come from the application, not from us.",
+        "The only thing to decide right now is whether you want the Friday installation. We can sort out the rest together in a few minutes."
+      ],
+      risk: [
+        "Do not state or imply that the customer will be approved, or how fast a decision will come — say “the conversation takes about ten minutes,” not “you’ll be approved in ten minutes.”",
+        "Monthly figures in this workspace are illustrative framing only. Quote real numbers only from application results.",
+        "The customer is under heat stress with children at home — avoid urgency pressure beyond the factual install-slot hold. The Friday deadline must be real.",
+        "Both decision-makers are present — address both; do not steer the financing conversation to one spouse."
+      ],
+      review: [
+        "Confirm the $12,800 quote matches the signed proposal before referencing it in any message.",
+        "Verify the Friday install slot and the noon hold are real before sending the SMS/email drafts.",
+        "Read the merchant script aloud once — edit anything that doesn’t sound like you."
+      ],
+      kpis: { time: 22, uplift: 1550, confidence: 91, review: true, reviewNote: "Same-day close — verify quote and slot before sending drafts" }
+    }
+  },
+
+  roofing: {
+    form: {
+      category: "roofing", amount: 9400, priority: "payment", urgency: "week", upsell: false,
+      notes: "Insurance approved $14,600 on a $24,000 replacement after hail claim; homeowner owes a $9,400 gap plus already-paid deductible. Visibly stressed about the out-of-pocket. Wants work done before the next storm season but mentioned possibly putting the gap on a credit card."
+    },
+    curated: {
+      headlineTag: "Affordability + reassurance framing",
+      headline: "Shrink the problem to the gap, then shrink the gap to a monthly number",
+      summary: "This homeowner isn’t buying a roof — insurance already bought most of it. They’re solving a $9,400 bill they never planned for. Anchor every number on the gap, not the $24,000 project total, and lead with reassurance: this is common, there are ways to spread it out, and the roof gets done before storm season either way. They mentioned a credit card — without disparaging that option, position a structured monthly payment as the calmer, more predictable path and let them compare.",
+      why: [
+        ["Priority is lowest monthly payment", "The customer’s stated concern is the out-of-pocket hit — affordability framing matches their words, not our agenda."],
+        ["The insurer covered $14,600 of $24,000", "Anchoring on the $9,400 gap makes the conversation feel solvable instead of overwhelming."],
+        ["Credit card mentioned as the fallback", "A fixed monthly plan is easy to position as the more predictable alternative — compare structure, never bash the card."],
+        ["This-week urgency, storm season ahead", "A gentle scheduling reason exists without manufacturing pressure."]
+      ],
+      upsells: [
+        { title: "Gutter and guard replacement", desc: "Crew and staging are already on the house — the marginal cost will never be lower. Frame as ‘while we’re up there,’ roughly $20–$34/mo more, illustratively.", delta: 1800 },
+        { title: "Ridge vent correction", desc: "Protects the new shingle warranty. Small add that positions you as protecting their investment, not padding the ticket.", delta: 750 }
+      ],
+      objection: "“I’ll just put the difference on my credit card.”\n\nYou absolutely can, and plenty of people do. The difference worth knowing: a card balance can move around on you — the payment and the interest can change month to month. A financing plan for the gap is one fixed number you can budget around. It costs nothing to see what that fixed number would be — want to spend ten minutes finding out, and then you can compare the two honestly?",
+      sms: "Hi Marcus — recap from today: insurance covers $14,600 of the $24,000 replacement, so your out-of-pocket gap is $9,400. If it's easier as a monthly payment instead of one hit, the financing conversation takes ~10 min — no obligation. Either way we can have the crew out before storm season. — Dan",
+      email_subject: "Your roof: what insurance covers, what's left, and your options",
+      email: "Hi Marcus,\n\nI know an unplanned $9,400 isn't welcome news, so I want to lay this out as clearly as I can.\n\nWHERE THE NUMBERS STAND\n• Full replacement (hail claim scope): $24,000\n• Insurance approved: $14,600\n• Your remaining gap: $9,400 (deductible already paid — nothing more owed there)\n\nWAYS TO HANDLE THE GAP\nSome customers pay it directly; others prefer to spread it into a predictable monthly payment rather than one lump sum. If that's worth exploring, the financing conversation takes about ten minutes and there's no obligation — you'd see your actual options before deciding anything.\n\nTIMING\nWe can complete the replacement before storm season picks up. Once you're comfortable with how you want to handle the gap, I'll get you on the schedule — usually within the week.\n\nHappy to walk through any of this by phone.\n\nDan Marsh\nComfort First Roofing Division",
+      merchantScript: [
+        "“First, the good news: insurance is covering $14,600 of this. The whole conversation is really about the $9,400 that’s left — not the $24,000 — and your deductible is already behind you.”",
+        "“You mentioned maybe putting the gap on a card. That works for some people. The alternative worth ten minutes: a financing plan turns it into one fixed monthly number — illustratively somewhere around $103 to $179 a month depending on the option — so nothing moves around on you. The real numbers come from the application, and there’s no obligation to take anything it shows you.”",
+        "“Either way, my commitment is the same: the roof is done before storm season. The only question is which way of handling the $9,400 lets you sleep better.”"
+      ],
+      customerScript: [
+        "Your insurance is paying $14,600 of the $24,000 replacement, so the only amount to figure out is the remaining $9,400. Your deductible is already paid.",
+        "You can pay that directly, or spread it into one fixed monthly payment so it doesn’t hit all at once. Seeing what that monthly option looks like takes about ten minutes and doesn’t commit you to anything — the actual terms come from the application.",
+        "Whichever you choose, the roof will be finished before storm season."
+      ],
+      risk: [
+        "Do not advise on the insurance claim itself — no comments on what the insurer should have covered, supplementing the claim, or deductible practices.",
+        "Never imply financing is connected to, endorsed by, or coordinated with the insurance carrier.",
+        "When comparing to the customer’s credit-card idea, compare structure (fixed vs. variable) factually — make no claims about their card’s rate or their costs.",
+        "Do not present the monthly range as an offer; it is illustrative framing until an application produces real terms."
+      ],
+      review: [
+        "Verify the $14,600 insurance figure against the actual claim paperwork before it appears in any customer message.",
+        "Confirm the deductible has actually been paid before repeating that claim.",
+        "Storm-season timing language must stay factual — no fear-based urgency."
+      ],
+      kpis: { time: 18, uplift: 2550, confidence: 87, review: true, reviewNote: "Insurance figures must be verified against claim documents" }
+    }
+  },
+
+  kitchen: {
+    form: {
+      category: "kitchen", amount: 38500, priority: "scope", urgency: "research", upsell: true,
+      notes: "Mid-range remodel quote verbally accepted at $38,500. Customer keeps circling back to the island and the lighting package they cut to hit budget. Permits are ~6 weeks out, so no time pressure. Additional approved credit headroom mentioned by the customer."
+    },
+    curated: {
+      headlineTag: "Scope-expansion + optionality framing",
+      headline: "Present the project they cut alongside the project they kept — as a monthly delta, not a bigger total",
+      summary: "The base project is already won; the opportunity is the $9,200 of scope the customer reluctantly removed. Because they’re researching with permits six weeks out, the play is optionality, not urgency: build a ‘good / better’ view where the island and lighting return as their own line items, expressed as an illustrative monthly difference rather than a new total. The customer told you they have credit headroom — that’s an invitation to show the version of the kitchen they actually described, then let them choose without pressure.",
+      why: [
+        ["Priority is bigger project scope", "The customer keeps returning to the cut items unprompted — the desire already exists; the framing just has to make it affordable-feeling."],
+        ["Researching stage, permits 6 weeks out", "No close pressure. A patient, options-forward posture builds trust and protects the base project."],
+        ["Additional approved credit indicated", "Headroom means scope adds are a monthly-delta conversation, not a can-you-afford-it conversation."],
+        ["$38,500 base is verbally accepted", "Protect it: present adds as separable line items so a ‘no’ on the island never reopens the base decision."]
+      ],
+      upsells: [
+        { title: "Island addition", desc: "The feature they keep mentioning. Quote as its own line: illustratively ~$75–$129/mo more. If it’s a no, the base project is untouched.", delta: 6800 },
+        { title: "Lighting package", desc: "Under-cabinet + pendants. Small delta (~$26–$46/mo, illustrative) with outsized perceived finish quality — the easiest yes on the sheet.", delta: 2400 },
+        { title: "Appliance tier upgrade", desc: "Install labor is identical either way; only equipment cost moves. Natural third option if the first two land.", delta: 3900 }
+      ],
+      objection: "“We already cut those to stay on budget — we shouldn’t reopen it.”\n\nCompletely reasonable, and the base project stands on its own. Here’s the only reason I bring it back up: adding the island during construction costs a fraction of adding it later, and you mentioned you have some credit headroom. Rather than one bigger scary number, look at it as the difference per month — if that difference doesn’t feel worth it, we build exactly what’s on the contract and it will be beautiful. Want to see the two versions side by side before permits come through?",
+      sms: "Hi Priya — great meeting today. Your base remodel is locked at $38,500. Since permits are ~6 weeks out, I put together a side-by-side of the base vs. base + island + lighting, shown as a monthly difference. No pressure either way — want me to email it over?",
+      email_subject: "Two versions of your kitchen — side by side, no pressure",
+      email: "Hi Priya,\n\nYour base remodel is locked in at $38,500 and nothing in this email changes that.\n\nSince permits give us about six weeks, I put together the comparison you and Alex talked about:\n\nOPTION A — AS CONTRACTED: $38,500\nThe full remodel as scoped. It will be a great kitchen.\n\nOPTION B — WITH THE ITEMS YOU CUT: $47,700\n• Island with seating (+$6,800)\n• Lighting package — under-cabinet + pendants (+$2,400)\nDoing these during construction avoids the tear-back cost of adding them later.\n\nON THE DIFFERENCE\nSome customers handle a scope difference like this as a monthly payment rather than cash. Illustratively, the $9,200 difference could look like roughly $101–$175/month depending on the option — real numbers would come from a short application, and there's no obligation in looking.\n\nNo response needed until you're ready — we have six weeks. Happy to walk through it whenever suits you both.\n\nDan Marsh\nMarsh Design + Build",
+      merchantScript: [
+        "“Your base project is locked — $38,500, exactly as contracted. What I want to show you is the version of this kitchen you two originally described, before budget trimmed it.”",
+        "“The island and the lighting package together are $9,200 more. As one number that sounds like a lot. As a monthly difference — illustratively around $101 to $175 a month, with real terms coming from a short application — it’s a different conversation. And you mentioned you have credit headroom, so this is genuinely your call, not a stretch.”",
+        "“Here’s my only push: adding an island after drywall closes costs roughly double. We have six weeks before permits. Take the side-by-side home, and whichever version you pick, that’s the kitchen we build.”"
+      ],
+      customerScript: [
+        "Your remodel is confirmed at $38,500 and nothing changes that. Separately, here are the two items you originally wanted — the island and the lighting — shown as their own add-on: $9,200 together.",
+        "If paying that as a monthly amount is easier than cash, there’s a short application that shows exact options; the figures we discussed today are illustrations, not offers. Looking costs nothing and doesn’t obligate you.",
+        "The only timing note: adding these during construction is far cheaper than after. You have about six weeks to decide, and either version gets you a kitchen you’ll love."
+      ],
+      risk: [
+        "Project total with adds ($47,700) crosses the $30,000 senior-review threshold — route to a senior reviewer before customer delivery.",
+        "Customer is in research mode: no expiring incentives, no artificial deadlines. The six-week permit window is the only legitimate timing fact.",
+        "“Additional approved credit” is the customer’s statement — do not reference their credit standing back to them or treat it as verified.",
+        "Keep the base contract fully separable in every document, so declining adds never reopens the accepted $38,500 agreement."
+      ],
+      review: [
+        "Senior review required: combined scope exceeds $30,000.",
+        "Confirm the island and lighting line-item prices against current supplier quotes before the side-by-side goes out.",
+        "Verify the ‘roughly double after drywall’ claim reflects your actual change-order pricing."
+      ],
+      kpis: { time: 14, uplift: 9200, confidence: 84, review: true, reviewNote: "Senior review — combined scope exceeds $30,000 threshold" }
+    }
+  }
+};
+
+/* ===========================================================================
+   Generic composer — deterministic output for any custom input
+=========================================================================== */
+function compose(input){
+  const cat = CATEGORY_LABELS[input.category];
+  const amt = input.amount;
+  const range = monthlyRange(amt);
+  const upsellLib = CATEGORY_UPSELLS[input.category] || [];
+  const upsells = (input.upsell ? upsellLib : upsellLib.slice(0,2)).slice(0,3);
+
+  const priorityFrames = {
+    payment: {
+      tag: "Affordability framing",
+      headline: "Anchor on the monthly number, not the project total",
+      summary: `For this ${cat.toLowerCase()} conversation, lead with what the project could feel like month to month rather than the ${fmtUSD(amt)} total. Present one clear illustrative range (${range} — framing only, actual terms come from an application), confirm it fits how they budget, and only then walk the scope. Keep the total visible but secondary; the customer told you the monthly figure is the decision variable.`
+    },
+    promo: {
+      tag: "Promotional-financing framing",
+      headline: "Lead with optionality — using only approved promo language",
+      summary: `This customer is interested in promotional financing structures, so open with optionality: “if you qualify, there may be promotional options worth seeing before you decide how to pay.” Use only compliance-approved promotional language — no improvised descriptions of promo mechanics — and position the ten-minute application conversation as the way to see real options for the ${fmtUSD(amt)} project. Never characterize promo terms from memory.`
+    },
+    speed: {
+      tag: "Fast-decision framing",
+      summary: `This customer wants certainty more than options. Keep the money conversation to three items: the ${fmtUSD(amt)} installed total, one illustrative monthly range (${range} — framing only), and a ten-minute application conversation that tells them where they stand before you leave. Resist introducing structures they didn’t ask about; for an urgent buyer, optionality reads as delay.`,
+      headline: "Reduce friction — one total, one range, one next step"
+    },
+    scope: {
+      tag: "Scope-expansion framing",
+      headline: "Sell the difference per month, not a bigger total",
+      summary: `The opportunity in this ${cat.toLowerCase()} conversation is scope. Present the base ${fmtUSD(amt)} project and the expanded version side by side, expressing each add as its own line with an illustrative monthly delta — so saying no to an add never reopens the base decision. Optionality is the posture: the customer picks the version of the project they actually want.`
+    }
+  };
+
+  const urgencyWhy = {
+    today: ["Urgency is same-day", "Certainty and a single clear next step matter more than exploring structures — keep choices to two."],
+    week: ["Decision window is this week", "There’s room for one follow-up touch; send the recap message today so the decision doesn’t drift."],
+    research: ["Customer is researching", "No close pressure — a patient, options-forward posture builds the trust that wins the eventual decision."]
+  };
+
+  const priorityWhy = {
+    payment: ["Priority is lowest monthly payment", "Affordability framing matches the customer’s stated concern — anchor on the monthly figure."],
+    promo: ["Priority is promotional financing", "The customer wants to see structures — route them to the application conversation where real options live."],
+    speed: ["Priority is a fast approval conversation", "The customer wants to know where they stand quickly — make the process feel effortless."],
+    scope: ["Priority is bigger project scope", "Monthly-delta framing lets scope adds feel like choices rather than upsells."]
+  };
+
+  const objections = {
+    payment: "“That’s more than we wanted to spend.”\n\nTotally understand — most people think about it as the total. Can I show it a different way? As a monthly amount, this project could sit illustratively around " + range + " depending on the option — the exact figure comes from a short application, not from me. If the monthly number fits your budget, the total stops being the obstacle. Worth ten minutes to see the real options?",
+    promo: "“I don’t want to pay interest.”\n\nThat’s exactly why it’s worth looking before you decide how to pay. Depending on what you qualify for, there may be promotional options — I can’t tell you the terms, but the application conversation can, and it takes about ten minutes with no obligation. Then you’re choosing with the real numbers in front of you instead of guessing.",
+    speed: "“I need to think about it.”\n\nOf course — and you should decide on your own timeline. One thing that makes thinking easier: knowing your financing options. That conversation takes about ten minutes, costs nothing, and doesn’t obligate you. Then whatever you decide, you’re deciding with complete information. Want to get that answered now so it’s off your list?",
+    scope: "“Let’s just stick with the basic version.”\n\nAbsolutely your call, and the base project stands on its own. The only reason to look at the fuller version now: doing it during this project costs far less than coming back later. Look at the difference as a monthly amount rather than a bigger total — if it’s not worth that difference to you, we build the base and it’ll be great."
+  };
+
+  const urgencySms = {
+    today: `Hi [Customer] — thanks for the time today. Recap: ${cat.toLowerCase()} project at ${fmtUSD(amt)} installed, crew slot held for this week. If financing helps, that conversation takes ~10 min, no obligation. What time works to finalize? — [Rep]`,
+    week: `Hi [Customer] — good talking today. Your ${cat.toLowerCase()} proposal is ${fmtUSD(amt)} installed. Happy to walk through payment options whenever suits — the financing conversation takes ~10 min and doesn’t obligate you. I’ll check back Thursday if I don’t hear from you. — [Rep]`,
+    research: `Hi [Customer] — thanks for having me out. No rush at all: your ${cat.toLowerCase()} proposal (${fmtUSD(amt)}) is good for 30 days, and if it’s ever useful to see monthly-payment options, that takes ~10 min with no obligation. Here whenever you’re ready. — [Rep]`
+  };
+
+  const emailBody =
+`Hi [Customer],
+
+Thanks for walking through your ${cat.toLowerCase()} project today. Here’s everything in one place.
+
+THE PROJECT — ${fmtUSD(amt)} installed
+[One or two lines describing the agreed scope — edit before sending.]
+
+ON PAYING FOR IT
+Some customers pay directly; others prefer a predictable monthly payment. If that’s worth exploring, the financing conversation takes about ten minutes and there’s no obligation — you’d see your actual options before deciding anything. (Any monthly figures we discussed in person were illustrations, not offers — real terms come from the application.)
+
+NEXT STEP
+${input.urgency === "today" ? "I’m holding your install slot — let’s confirm by end of day so the crew stays scheduled." : input.urgency === "week" ? "I’ll follow up later this week; reply anytime sooner and we’ll get you scheduled." : "No response needed until you’re ready — the proposal is good for 30 days."}
+
+[Rep name]
+[Company]`;
+
+  const pf = priorityFrames[input.priority];
+  const escalate = amt >= 30000 || input.urgency === "today";
+  const escalateReason = amt >= 30000
+    ? `Project amount ${fmtUSD(amt)} exceeds the $30,000 senior-review threshold`
+    : input.urgency === "today" ? "Same-day close — verify quotes and availability before sending drafts" : "";
+
+  const risk = [
+    "Do not state or imply approval likelihood, credit decisions, or specific terms — all real numbers come from the application, not this workspace.",
+    "Monthly figures shown here are illustrative framing only and must be labeled that way in any customer-facing use.",
+  ];
+  if (input.priority === "promo") risk.push("Promotional financing may only be described with compliance-approved language — never improvise promo mechanics, deferral rules, or qualification criteria.");
+  if (input.urgency === "today") risk.push("High-urgency customer: any deadline you reference (install slots, holds) must be real and verifiable — no manufactured scarcity.");
+  if (input.urgency === "research") risk.push("Research-stage customer: avoid expiring incentives or artificial deadlines; patience is the compliant and effective posture.");
+  if (input.upsell) risk.push("“Additional approved credit” reflects the customer’s own statement — do not reference their credit standing back to them or treat it as verified.");
+  if (amt >= 30000) risk.push(`At ${fmtUSD(amt)}, this project requires senior review before any customer-facing content is delivered.`);
+
+  const review = [
+    `Confirm the ${fmtUSD(amt)} figure matches the current signed or written proposal.`,
+    "Personalize and fact-check the SMS and email drafts — bracketed placeholders must be replaced before sending.",
+    "Read both scripts aloud and edit to your own voice; the audit trail records your changes."
+  ];
+  if (escalate) review.unshift(escalateReason + ".");
+
+  const merchantScript = [
+    `“Here’s the full picture: the ${cat.toLowerCase()} project is ${fmtUSD(amt)} installed, with the scope we walked through together.”`,
+    `“On paying for it — you’ve got options. If a monthly payment is easier than one lump sum, the financing conversation takes about ten minutes and shows you exactly where you stand, with no obligation. Illustratively, projects this size often land somewhere around ${range}, but the real numbers come from the application, not from me.”`,
+    `“${input.urgency === "research" ? "There’s no clock on this — take the information home and decide on your timeline." : "So the decision for today is just whether you want to move forward — the rest takes minutes."}”`
+  ];
+
+  const customerScript = [
+    `Your ${cat.toLowerCase()} project costs ${fmtUSD(amt)}, fully installed.`,
+    "You don’t have to pay it all at once. A short conversation — about ten minutes — shows what a monthly payment could look like. It doesn’t commit you to anything, and the exact terms come from the application, not from estimates.",
+    input.urgency === "research" ? "There’s no deadline. Take your time, and we’re here when you’re ready." : "Once you’re comfortable, we get you on the schedule and take care of the rest."
+  ];
+
+  const conf = ({payment:86, promo:82, speed:88, scope:84})[input.priority] - (input.urgency==="research" ? 4 : 0);
+  const time = ({today:20, week:16, research:13})[input.urgency];
+  const uplift = upsells.slice(0, input.upsell ? 3 : 2).reduce((s,u)=>s+u.delta, 0);
+
+  return {
+    headlineTag: pf.tag,
+    headline: pf.headline,
+    summary: pf.summary,
+    why: [priorityWhy[input.priority], urgencyWhy[input.urgency],
+      ["Estimated amount is " + fmtUSD(amt), amt >= 30000 ? "Larger tickets benefit most from monthly framing — and trigger the senior-review checkpoint." : "Squarely in the range where monthly framing changes how the total feels."],
+      ...(input.upsell ? [["Customer indicated additional credit headroom", "Scope adds become a monthly-delta choice rather than an affordability stretch."]] : [])
+    ],
+    upsells,
+    objection: objections[input.priority],
+    sms: urgencySms[input.urgency],
+    email_subject: `Your ${cat.toLowerCase()} project — summary and options`,
+    email: emailBody,
+    merchantScript, customerScript,
+    risk, review,
+    kpis: { time, uplift, confidence: conf, review: true, reviewNote: escalate ? escalateReason : "Standard review — verify figures before customer delivery" },
+    escalate, escalateReason
+  };
+}
+
+/* Fit matrix: how well each approach suits the captured priority */
+function fitFor(approachKey, input){
+  if (approachKey === input.priority) return ["Strong", "fit-strong"];
+  const near = { payment:["promo"], promo:["payment"], speed:["payment"], scope:["promo"] };
+  if ((near[input.priority]||[]).includes(approachKey)) return ["Moderate", "fit-mod"];
+  if (input.urgency === "today" && approachKey === "scope") return ["Low", "fit-low"];
+  if (input.urgency === "research" && approachKey === "speed") return ["Low", "fit-low"];
+  return ["Moderate", "fit-mod"];
+}
+function reviewFlagFor(approachKey, input){
+  if (approachKey === "promo") return ["Use approved promo language only", "chip-warn"];
+  if (approachKey === "scope" && (input.amount >= 30000 || input.upsell)) return ["Senior review for scope adds", "chip-warn"];
+  if (approachKey === "speed" && input.urgency === "today") return ["Verify holds/slots are real", "chip-warn"];
+  return ["Standard", "chip-muted"];
+}
+
+/* ===========================================================================
+   State + audit trail
+=========================================================================== */
+const state = {
+  status: "draft",
+  edits: 0,
+  generated: false,
+  escalate: false,
+  audit: []
+};
+
+function logAudit(type, title, detail){
+  const entry = { time: nowStamp(), type, title, detail: detail || "" };
+  state.audit.push(entry);
+  const li = document.createElement("li");
+  li.className = "audit-item";
+  li.innerHTML = `
+    <span class="audit-time">${entry.time}</span>
+    <span class="audit-dot-col"><span class="audit-dot t-${type}" aria-hidden="true"></span></span>
+    <span class="audit-body"><strong>${esc(title)}</strong>${detail ? `<span class="a-detail">${esc(detail)}</span>` : ""}</span>`;
+  const list = $("#auditList");
+  list.prepend(li);
+  while (list.children.length > 40) list.removeChild(list.lastChild);
+}
+
+function setStatus(status, {log=true} = {}){
+  state.status = status;
+  $$("#statusCtl button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.status === status)));
+  const chips = {
+    draft: '<span class="chip chip-muted">Draft</span>',
+    reviewed: '<span class="chip chip-info">Reviewed</span>',
+    approved: '<span class="chip chip-good">Approved for merchant use</span>'
+  };
+  $("#auditApproval").innerHTML = chips[status];
+  $("#cmdStatus").innerHTML = chips[status];
+  if (log) logAudit("status", "Status set to " + ({draft:"Draft", reviewed:"Reviewed", approved:"Approved for merchant use"})[status],
+    status === "approved" ? "Merchant accepted responsibility for customer-facing use of this content" : "");
+}
+
+function setEscalation(on, reason){
+  state.escalate = on;
+  $("#auditEscalation").innerHTML = on
+    ? '<span class="chip chip-crit">Escalation required</span>'
+    : '<span class="chip chip-good">Not required</span>';
+  if (on) logAudit("flag", "Escalation flagged", reason);
+}
+
+/* ===========================================================================
+   Rendering
+=========================================================================== */
+function renderKpis(k){
+  $("#kpiTime").innerHTML = `~${k.time} <span class="unit">min</span>`;
+  $("#kpiUplift").textContent = "+" + fmtUSD(k.uplift);
+  $("#kpiConf").innerHTML = `${k.confidence}<span class="unit">%</span>`;
+  $("#kpiConfBar").style.width = k.confidence + "%";
+  const pill = $("#kpiReviewPill");
+  pill.className = "chip " + (k.review ? "chip-warn" : "chip-good");
+  pill.textContent = k.review ? "Required" : "Not required";
+  $("#kpiReviewSub").textContent = k.reviewNote || "";
+}
+
+function upsellLi(u){
+  return `<li><strong>${esc(u.title)}</strong> <span class="li-sub num">(+${fmtUSD(u.delta)})</span><br><span class="li-sub">${esc(u.desc)}</span></li>`;
+}
+
+function renderRecommendation(out, input){
+  const upsellHtml = out.upsells.length
+    ? `<ul>${out.upsells.map(u => upsellLi(u)).join("")}</ul>
+       <p style="margin-top:10px; font-size:11.5px; color:var(--ink-3)">Deltas are project-cost adds. Any monthly framing of an add is illustrative only.</p>`
+    : `<p style="color:var(--ink-2)">No scope adds suggested for this conversation — the customer’s urgency and priorities argue for keeping the decision simple.</p>`;
+
+  $("#recBody").innerHTML = `
+    <div class="rec-headline">
+      <span class="rh-tag">${esc(out.headlineTag)}</span>
+      <h3>${esc(out.headline)}</h3>
+      <p>${esc(out.summary)}</p>
+      <div class="rec-meta">
+        <span class="chip chip-muted chip-plain">${esc(CATEGORY_LABELS[input.category])}</span>
+        <span class="chip chip-muted chip-plain num">${fmtUSD(input.amount)}</span>
+        <span class="chip chip-muted chip-plain">${esc(PRIORITY_LABELS[input.priority])}</span>
+        <span class="chip chip-muted chip-plain">${esc(URGENCY_LABELS[input.urgency])}</span>
+        ${input.upsell ? '<span class="chip chip-info">Credit headroom indicated</span>' : ""}
+      </div>
+    </div>
+
+    <div class="rec-grid">
+      <div class="rec-block">
+        <h3>Why this fits the customer</h3>
+        <ul>${out.why.map(([t,d]) => `<li><strong>${esc(t)}.</strong> <span class="li-sub">${esc(d)}</span></li>`).join("")}</ul>
+      </div>
+      <div class="rec-block">
+        <h3>Scope-expansion opportunities</h3>
+        ${upsellHtml}
+      </div>
+
+      <div class="rec-block span2">
+        <h3>Objection handling <span class="chip chip-muted chip-plain">Plain English</span></h3>
+        <div class="draft-box">${esc(out.objection)}</div>
+      </div>
+
+      <div class="rec-block">
+        <h3>Follow-up SMS draft <span class="chip chip-muted chip-plain">Edit before sending</span></h3>
+        <div class="draft-box" id="smsDraft">${esc(out.sms)}</div>
+        <div class="draft-actions"><button type="button" class="btn btn-ghost copy-btn" data-copy="smsDraft">Copy SMS</button></div>
+      </div>
+      <div class="rec-block">
+        <h3>Follow-up email draft <span class="chip chip-muted chip-plain">Edit before sending</span></h3>
+        <div class="draft-box" id="emailDraft"><strong>Subject:</strong> ${esc(out.email_subject)}
+
+${esc(out.email)}</div>
+        <div class="draft-actions"><button type="button" class="btn btn-ghost copy-btn" data-copy="emailDraft">Copy email</button></div>
+      </div>
+
+      <div class="rec-block tone-warn">
+        <h3>Risk &amp; compliance notes</h3>
+        <ul>${out.risk.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
+      </div>
+      <div class="rec-block tone-info">
+        <h3>Required human review</h3>
+        <ul>${out.review.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
+      </div>
+    </div>`;
+
+  $$(".copy-btn").forEach(btn => btn.addEventListener("click", async () => {
+    const text = $("#" + btn.dataset.copy).innerText;
+    try { await navigator.clipboard.writeText(text); } catch(e){ /* clipboard unavailable in some contexts */ }
+    const orig = btn.textContent;
+    btn.textContent = "Copied ✓"; btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove("copied"); }, 1600);
+  }));
+}
+
+function renderCompare(input){
+  const rows = [input.priority, ...["payment","promo","scope"].filter(k => k !== input.priority)].slice(0,3);
+  $("#compareBody").innerHTML = rows.map(key => {
+    const a = APPROACHES[key];
+    const [fitLabel, fitClass] = fitFor(key, input);
+    const [flag, flagClass] = reviewFlagFor(key, input);
+    return `<tr class="${key === input.priority ? "recommended-row" : ""}">
+      <td class="approach" data-label="Approach">${esc(a.name)}${key === input.priority ? ' <span class="chip chip-good" style="margin-left:6px">Recommended</span>' : ""}<span class="sub">${esc(a.sub)}</span></td>
+      <td data-label="Best for">${esc(a.bestFor)}</td>
+      <td data-label="Tradeoff">${esc(a.tradeoff)}</td>
+      <td data-label="Suggested merchant framing">${esc(a.framing)}</td>
+      <td data-label="Customer fit"><span class="${fitClass}">${fitLabel}</span></td>
+      <td data-label="Review flag"><span class="chip ${flagClass}">${esc(flag)}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderScripts(out){
+  $("#merchantScript").innerHTML = out.merchantScript.map(p => `<p>${esc(p)}</p>`).join("");
+  $("#customerScript").innerHTML = out.customerScript.map(p => `<p>${esc(p)}</p>`).join("");
+  $("#editedMerchant").classList.remove("show");
+  $("#editedCustomer").classList.remove("show");
+  baselines.merchant = $("#merchantScript").innerText;
+  baselines.customer = $("#customerScript").innerText;
+}
+
+/* ===========================================================================
+   Generation flow
+=========================================================================== */
+let activeScenario = "hvac";
+const baselines = { merchant: "", customer: "" };
+
+function readForm(){
+  return {
+    category: $("#fCategory").value,
+    amount: parseAmount(),
+    priority: $("input[name=priority]:checked").value,
+    urgency: $("input[name=urgency]:checked").value,
+    notes: $("#fNotes").value.trim(),
+    upsell: $("#fUpsell").checked
+  };
+}
+
+function matchesScenario(input){
+  if (!activeScenario || activeScenario === "custom") return null;
+  const f = SCENARIOS[activeScenario].form;
+  const same = f.category === input.category && f.priority === input.priority &&
+               f.urgency === input.urgency && f.upsell === input.upsell &&
+               Math.abs(f.amount - input.amount) < 1;
+  return same ? activeScenario : null;
+}
+
+function buildOutput(input){
+  const key = matchesScenario(input);
+  const base = compose(input);
+  if (key) {
+    const c = SCENARIOS[key].curated;
+    return { ...base, ...c, escalate: (c.kpis.review && /senior|exceeds/i.test(c.kpis.reviewNote || "")) || input.urgency === "today", escalateReason: c.kpis.reviewNote };
+  }
+  return base;
+}
+
+/* Procedural loading state */
+const PROC_STEPS = [
+  "Parsing intake fields",
+  "Matching conversation playbook",
+  "Drafting scripts and follow-ups",
+  "Running guardrail checks"
+];
+function procHTML(){
+  return `<div class="proc">
+    <div class="proc-title"><span class="spinner" aria-hidden="true"></span> Composing recommendation from captured inputs</div>
+    <ul class="proc-list" id="procList">
+      ${PROC_STEPS.map(s => `<li><span class="p-mark" aria-hidden="true"></span>${esc(s)}</li>`).join("")}
+    </ul>
+    <div class="proc-bar" aria-hidden="true"><i id="procBar"></i></div>
+  </div>`;
+}
+
+let generating = false;
+function generate({announce=true} = {}){
+  if (generating) return;
+  generating = true;
+  const input = readForm();
+  const btn = $("#generateBtn");
+  btn.disabled = true;
+
+  logAudit("input", "Inputs captured", `${CATEGORY_LABELS[input.category]} · ${fmtUSD(input.amount)} · ${PRIORITY_LABELS[input.priority]} · ${URGENCY_LABELS[input.urgency]}${input.upsell ? " · credit headroom indicated" : ""}`);
+  logAudit("ai", "Recommendation generation started", "Deterministic playbook composition (prototype)");
+
+  $("#recBody").innerHTML = procHTML();
+  $("#srStatus").textContent = "Generating recommendation…";
+
+  const items = $$("#procList li");
+  items.forEach((li, i) => setTimeout(() => {
+    li.classList.add("done");
+    $("#procBar").style.width = ((i+1) / items.length * 100) + "%";
+  }, 180 + i * 220));
+
+  setTimeout(() => {
+    const out = buildOutput(input);
+    renderKpis(out.kpis);
+    renderRecommendation(out, input);
+    renderCompare(input);
+    renderScripts(out);
+
+    const stamp = $("#genStamp");
+    stamp.hidden = false;
+    stamp.textContent = "Generated " + nowStamp();
+
+    state.generated = true;
+    state.edits = 0;
+    $("#auditEdits").textContent = "0";
+    setStatus("draft", {log:false});
+
+    logAudit("ai", "Recommendation generated",
+      `${out.headlineTag} · confidence ${out.kpis.confidence}% · ${out.upsells.length} scope suggestion${out.upsells.length===1?"":"s"} · human review required`);
+    logAudit("ai", "AI reasoning summary",
+      `Matched “${PRIORITY_LABELS[input.priority]}” + “${URGENCY_LABELS[input.urgency]}” to the ${out.headlineTag.toLowerCase()} playbook for ${CATEGORY_LABELS[input.category]} at ${fmtUSD(input.amount)}.`);
+
+    if (out.escalate) setEscalation(true, out.escalateReason || "Review threshold triggered");
+    else setEscalation(false);
+
+    $("#srStatus").textContent = "Recommendation ready for review.";
+    btn.disabled = false;
+    generating = false;
+  }, 1100);
+}
+
+/* ===========================================================================
+   Scenario loading
+=========================================================================== */
+function loadScenario(key, {log=true, autogen=true} = {}){
+  const s = SCENARIOS[key];
+  if (!s) return;
+  activeScenario = key;
+  $("#scenarioSel").value = key;
+  $("#intakeMode").textContent = "Scenario: " + SCENARIO_NAMES[key];
+  $("#fCategory").value = s.form.category;
+  $("#fAmount").value = s.form.amount.toLocaleString("en-US");
+  $(`input[name=priority][value=${s.form.priority}]`).checked = true;
+  $(`input[name=urgency][value=${s.form.urgency}]`).checked = true;
+  $("#fNotes").value = s.form.notes;
+  $("#fUpsell").checked = s.form.upsell;
+  if (log) logAudit("input", "Scenario loaded", SCENARIO_NAMES[key]);
+  if (autogen) generate();
+}
+
+$("#scenarioSel").addEventListener("change", e => {
+  const v = e.target.value;
+  if (v === "custom") { activeScenario = "custom"; $("#intakeMode").textContent = "Custom intake"; return; }
+  loadScenario(v);
+});
+
+/* Any manual form change detaches from the curated scenario */
+$("#intakeForm").addEventListener("input", () => {
+  if (generating) return;
+  const input = readForm();
+  if (activeScenario !== "custom" && !matchesScenario(input)) {
+    activeScenario = "custom";
+    $("#scenarioSel").value = "custom";
+    $("#intakeMode").textContent = "Custom intake";
+  }
+});
+
+$("#intakeForm").addEventListener("submit", e => { e.preventDefault(); generate(); });
+
+/* Amount formatting */
+$("#fAmount").addEventListener("blur", () => {
+  const n = parseAmount();
+  $("#fAmount").value = n.toLocaleString("en-US");
+});
+
+/* ===========================================================================
+   Status control
+=========================================================================== */
+$$("#statusCtl button").forEach(btn => btn.addEventListener("click", () => {
+  if (!state.generated) return;
+  if (btn.dataset.status === state.status) return;
+  setStatus(btn.dataset.status);
+}));
+
+/* ===========================================================================
+   Inline editing → audit
+=========================================================================== */
+/* Force plain-text paste so pasted content (e.g. from Outlook/Word) can't
+   bring in foreign markup, inline styles, or images into these fields. */
+function sanitizePaste(el){
+  el.addEventListener("paste", e => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+    if (document.queryCommandSupported && document.queryCommandSupported("insertText")) {
+      document.execCommand("insertText", false, text);
+      return;
+    }
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    sel.deleteFromDocument();
+    const range = sel.getRangeAt(0);
+    range.insertNode(document.createTextNode(text));
+    range.collapse(false);
+  });
+  /* Dragging in a file or rich HTML node is the same risk as paste — block it. */
+  el.addEventListener("drop", e => e.preventDefault());
+}
+
+function watchEditable(id, flagId, key){
+  const el = $("#" + id);
+  let timer = null;
+  el.addEventListener("input", () => {
+    if (!state.generated) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (el.innerText.trim() === (baselines[key] || "").trim()) return;
+      baselines[key] = el.innerText;
+      state.edits += 1;
+      $("#auditEdits").textContent = String(state.edits);
+      $("#" + flagId).classList.add("show");
+      logAudit("edit", "Human edit: " + el.dataset.editName, "Merchant modified the generated text (" + el.innerText.trim().split(/\s+/).length + " words)");
+      if (state.status === "approved") {
+        setStatus("draft", {log:false});
+        logAudit("status", "Status reset to Draft", "Content changed after approval — re-review required");
+      }
+    }, 900);
+  });
+}
+sanitizePaste($("#merchantScript"));
+sanitizePaste($("#customerScript"));
+watchEditable("merchantScript", "editedMerchant", "merchant");
+watchEditable("customerScript", "editedCustomer", "customer");
+
+/* ===========================================================================
+   Rail scroll-spy
+=========================================================================== */
+(function railSpy(){
+  const links = $$(".rail-nav a");
+  if (!("IntersectionObserver" in window) || !links.length) return;
+  const map = new Map();
+  links.forEach(a => {
+    const sec = document.querySelector(a.getAttribute("href"));
+    if (sec) map.set(sec, a);
+  });
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        links.forEach(l => l.classList.remove("active"));
+        map.get(en.target)?.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-30% 0px -55% 0px" });
+  map.forEach((_, sec) => obs.observe(sec));
+})();
+
+/* ===========================================================================
+   Export audit log
+=========================================================================== */
+$("#exportAudit").addEventListener("click", async () => {
+  const payload = JSON.stringify({
+    exported: new Date().toISOString(),
+    approvalState: state.status,
+    humanEdits: state.edits,
+    escalationRequired: state.escalate,
+    events: [...state.audit].reverse()
+  }, null, 2);
+  const btn = $("#exportAudit");
+  try { await navigator.clipboard.writeText(payload); } catch(e){}
+  const orig = btn.innerHTML;
+  btn.textContent = "Copied ✓"; btn.classList.add("copied");
+  setTimeout(() => { btn.innerHTML = orig; btn.classList.remove("copied"); }, 1600);
+});
+
+/* ===========================================================================
+   Boot — preload the HVAC scenario and generate
+=========================================================================== */
+logAudit("input", "Session started", "Deal Desk Copilot prototype · mock data · no lending decisions");
+loadScenario("hvac", {log:true, autogen:true});
+</script>
+</body>
+</html>
