@@ -1,6 +1,21 @@
 # Deal Desk Copilot
 
-A concept prototype exploring decision-support tooling for point-of-sale merchant financing conversations — built as a product and UX case study, not a production system.
+**A case study in AI solutioning for deal desk professionals.**
+
+## The problem
+
+Deal desk and merchant-facing sales teams — especially in home improvement financing — make fast, high-stakes framing decisions in live conversations: how to talk about payment options, when to bring up scope expansion, how to handle a price objection, all while staying inside compliance guardrails they can't always recite on the spot. Most tooling built for this moment is either a static script binder nobody opens mid-conversation, or a black-box "AI assistant" that hands back an answer without showing its reasoning or leaving anything reviewable behind it.
+
+## The approach
+
+Deal Desk Copilot is a concept prototype that treats explainability, human review, and auditability as first-class product requirements — not compliance features bolted on after the AI part is "done." Every recommendation shows its reasoning, every editable output is tracked, and every session produces a reviewable audit trail: what was captured, what the model reasoned, what a human changed, and whether the case needs escalation.
+
+## What this demonstrates
+
+- **Product framing for AI-assisted workflows in regulated environments** — decision support, not decisioning; the tool never claims to approve, underwrite, or predict credit outcomes.
+- **Designing for auditability from the start** — a dedicated audit trail panel (timestamped inputs, reasoning summary, human edits, approval state, escalation flags), not a log tacked on afterward.
+- **Fast, structured prototyping** — built end-to-end as a single self-contained interface, from intake form through recommendation, comparison, and editable scripts.
+- **Attention to real production details** — WCAG-checked color contrast in both themes, sanitized paste handling on editable fields, responsive layout down to mobile.
 
 ## What it is
 
@@ -12,23 +27,9 @@ A merchant (HVAC contractor, roofing rep, remodeler, pools & spas dealer) is mid
 - Draft follow-up SMS and email
 - A three-way comparison of financing conversation approaches (not loan products)
 - Editable merchant-facing and customer-facing scripts
-- A full audit trail — captured inputs, AI reasoning summary, human edits, approval state, and escalation flags
+- A full audit trail
 
-It's explicitly scoped as decision support only: no credit approvals, no underwriting results, no lending decisions. That boundary is stated in the UI itself, not just in this README.
-
-## Why this exists
-
-Built to explore what "AI-native" product thinking looks like when explainability, audit trails, and human-in-the-loop review are treated as first-class product requirements from the start — not compliance features bolted on after the fact.
-
-## Features
-
-- KPI header: estimated time saved, potential ticket uplift, merchant confidence, human-review-required status
-- Structured merchant intake form with quick-load example scenarios (HVAC emergency replacement, roofing insurance gap, kitchen remodel upsell)
-- Deterministic recommendation engine — scenario-aware, with a procedural (non-decorative) loading state
-- Financing conversation comparison table with customer-fit and review-flag columns
-- Inline-editable merchant/customer scripts, with paste forced to plain text (no injected markup or styling)
-- Full audit trail panel with an exportable JSON log
-- Light/dark theme with a visible toggle, responsive down to mobile, WCAG-checked color contrast on both themes
+It's explicitly scoped as decision support only: no credit approvals, no underwriting results, no lending decisions. That boundary is stated in the UI itself, not just here.
 
 ## Tech stack
 
@@ -36,7 +37,7 @@ Single self-contained HTML file — HTML, CSS, and vanilla JavaScript. No backen
 
 ## Running it
 
-Open `deal-desk-copilot.html` directly in any browser — or view it live via GitHub Pages once enabled for this repo.
+Open `deal-desk-copilot.html` directly in any browser, or view the live demo via GitHub Pages once enabled for this repo.
 
 ## Disclaimer
 
