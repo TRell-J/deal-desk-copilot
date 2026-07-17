@@ -37,7 +37,7 @@ Single self-contained HTML file — HTML, CSS, and vanilla JavaScript. No backen
 
 ## Running it
 
-Open `deal-desk-copilot.html` directly in any browser, or view the live demo via GitHub Pages once enabled for this repo.
+Open `index.html` directly in any browser, or view the live demo via GitHub Pages once enabled for this repo.
 
 ## Disclaimer
 
