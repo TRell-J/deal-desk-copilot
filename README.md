@@ -4,7 +4,7 @@
 
 ## The problem
 
-Deal desk and merchant-facing sales teams (specificied for home improvement financing)  make fast, high-stakes framing decisions in live conversations: how to talk about payment options, when to bring up scope expansion, how to handle a price objection, all while staying inside compliance guardrails they can't always recite on the spot. Most tooling built for this moment is either a static script binder nobody opens mid-conversation, or a black-box "AI assistant" that hands back an answer without showing its reasoning or leaving anything reviewable behind it.
+Deal desk and merchant-facing sales teams (specifically for home improvement financing) make fast, high-stakes framing decisions in live conversations: how to talk about payment options, when to bring up scope expansion, how to handle a price objection, all while staying inside compliance guardrails they can't always recite on the spot. Most tooling built for this moment is either a static script binder nobody opens mid-conversation, or a black-box "AI assistant" that hands back an answer without showing its reasoning or leaving anything reviewable behind it.
 
 ## The approach
 
