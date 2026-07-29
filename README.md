@@ -50,9 +50,7 @@ This prototype was intentionally shaped around a few principles:
 
 ## Spec-to-code approach
 
-This is a prototype-first workflow rather than a traditional long-spec-then-build cycle.
-
-The process moved in tight loops:
+This is a prototype-first workflow and the process moved in tight loops:
 
 1. **Define the workflow, not just the feature.** Before writing anything, the merchant conversation itself was mapped: what information is known at the point of sale, what decision is being made, and what needs to be reviewable afterward.
 2. **Draft a lightweight spec.** Inputs, outputs, edge cases, and the compliance boundary (decision support, not decisioning) were defined up front as a short, living spec rather than a lengthy PRD.
