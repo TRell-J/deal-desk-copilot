@@ -48,7 +48,7 @@ This prototype was intentionally shaped around a few principles:
 - Auditability should be part of the product interaction, not an afterthought.
 - The interface should be useful in a live conversation, not just impressive in a demo.
 
-  ## Spec-to-code approach
+## Spec-to-code approach
 
 This is a prototype-first workflow rather than a traditional long-spec-then-build cycle.
 
