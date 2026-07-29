@@ -75,8 +75,7 @@ Single self-contained HTML file using HTML, CSS, and vanilla JavaScript. No back
 
 ## Running it
 
-Open `index.html` directly in any browser, or view the live demo via GitHub Pages once enabled for this repo.
-
+Open `(https://trell-j.github.io/deal-desk-copilot/)` directly in any browser.
 ## Disclaimer
 
 This is an independent concept prototype using mock data and deterministic sample outputs. It is not affiliated with, built for, or endorsed by any lender, card network, or financial institution. It does not access real credit systems or make lending decisions.
