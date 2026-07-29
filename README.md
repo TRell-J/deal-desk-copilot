@@ -48,6 +48,20 @@ This prototype was intentionally shaped around a few principles:
 - Auditability should be part of the product interaction, not an afterthought.
 - The interface should be useful in a live conversation, not just impressive in a demo.
 
+  ## Spec-to-code approach
+
+This is a prototype-first workflow rather than a traditional long-spec-then-build cycle.
+
+The process moved in tight loops:
+
+1. **Define the workflow, not just the feature.** Before writing anything, the merchant conversation itself was mapped: what information is known at the point of sale, what decision is being made, and what needs to be reviewable afterward.
+2. **Draft a lightweight spec.** Inputs, outputs, edge cases, and the compliance boundary (decision support, not decisioning) were defined up front as a short, living spec rather than a lengthy PRD.
+3. **Prototype directly against that spec.** The interface was built iteratively in code, with each pass checked against the original intent: does this still support the conversation in real time, and is the reasoning still visible?
+4. **Treat the spec and the build as one artifact.** When the interaction model changed, the spec changed with it. Nothing was locked in place before it was tested against the actual experience.
+5. **Validate against realistic scenarios**, not just happy-path demos, before considering a feature "done."
+
+The result is a spec that stayed close to the build the entire time, rather than a document written once and handed off.
+
 ## What a reviewer should notice
 
 This project is less about a polished production lending workflow and more about the product decisions behind the prototype:
